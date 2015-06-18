@@ -9,7 +9,6 @@ use std::io::BufRead;
 use std::fs::OpenOptions;
 use std::io::BufWriter;
 use std::io::Write;
-use std::fmt;
 
 fn main() {
     let file = match File::open(env::args().nth(1).unwrap()) {
@@ -24,28 +23,30 @@ fn main() {
     println!("ns: {}  open file", t() - start);
     start = t();
 
-    let mut numbers = vec![false; 10000000];
+    let mut numbers : Vec<String> = Vec::with_capacity(10000000);
+    unsafe {
+        numbers.set_len(10000000);
+    }
 
     println!("ns: {}  allocate vector", t() - start);
     start = t();
 
     let mut count = 0;
-    for line in reader.lines().filter_map(|result|result.ok()) {
+    for line in reader.lines().filter_map(|result| result.ok()) {
         let indx: usize = line.parse().unwrap();
-        numbers[indx] = true;
+        numbers[indx] = line;
         count = count + 1;
     }
 
     println!("ns: {}  read lines", t() - start);
     start = t();
 
-    let mut inx = 0;
     let mut str_buf = String::with_capacity(80001000);
-    for element in numbers {
-        if element {
-            str_buf.push_str(&fmt::format(format_args!("{:07}\n", inx)));
+    for indx in 0..9999999 {
+        if !numbers[indx].is_empty() {
+            str_buf.push_str(&numbers[indx]);
+            str_buf.push_str("\n");
         }
-        inx = inx + 1;
     }
 
     println!("ns: {}  parse lines ", t() - start);
