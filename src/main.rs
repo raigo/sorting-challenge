@@ -1,4 +1,3 @@
-#![allow(unused_must_use)]
 extern crate time;
 use time::precise_time_ns as t;
 
@@ -9,6 +8,7 @@ use std::io::BufRead;
 use std::fs::OpenOptions;
 use std::io::BufWriter;
 use std::io::Write;
+//use std::io::Read;
 
 fn main() {
     let file = match File::open(env::args().nth(1).unwrap()) {
@@ -23,28 +23,38 @@ fn main() {
     println!("ns: {}  open file", t() - start);
     start = t();
 
-    let mut numbers : Vec<String> = Vec::with_capacity(10000000);
+    let mut numbers : Vec<String> = Vec::with_capacity(10_000_000);
     unsafe {
-        numbers.set_len(10000000);
+        numbers.set_len(10_000_000);
     }
 
     println!("ns: {}  allocate vector", t() - start);
     start = t();
 
+//    let str_buf0 = &mut String::with_capacity(80_000_010);
+//    reader.read_to_string(str_buf0);
+//    println!("buf len : {}", str_buf0.len());
+//    println!("{}", str_buf0);
+
     let mut count = 0;
-    for line in reader.lines().filter_map(|result| result.ok()) {
-        let indx: usize = line.parse().unwrap();
-        numbers[indx] = line;
-        count = count + 1;
+    for line in reader.lines() {
+        match line {
+            Ok(l) => {
+                let indx: usize = l.parse().unwrap();
+                numbers[indx] = l;
+            },
+            Err(_) => {}
+        }
+        count += 1;
     }
 
     println!("ns: {}  read lines", t() - start);
     start = t();
 
-    let mut str_buf = String::with_capacity(80001000);
-    for indx in 0..9999999 {
-        if !numbers[indx].is_empty() {
-            str_buf.push_str(&numbers[indx]);
+    let mut str_buf = String::with_capacity(80_000_010);
+    for number in &numbers {
+        if !number.is_empty() {
+            str_buf.push_str(number);
             str_buf.push_str("\n");
         }
     }
@@ -62,7 +72,7 @@ fn main() {
     start = t();
 
     let mut writer = BufWriter::new(&out_file);
-    writer.write_all(str_buf.as_bytes());
+    let _ = writer.write_all(str_buf.as_bytes());
     println!("ns: {}  write to file", t() - start);
 
     println!("Done sorting, lines {} sorted", count);
